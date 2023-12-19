@@ -8,6 +8,7 @@ from dateutil.relativedelta import relativedelta
 
 
 import plotly.express as px
+import plotly.graph_objects as go
 
 #Set title, icon, and layout
 st.set_page_config(
@@ -117,7 +118,10 @@ with st.sidebar:
 
         filters_text.append("Platform: " + platform  )
 
+        
+
     #reset inputs
+    #FIXME: Se crean varios botones de reset cada que se activa y desactiva un filtro
     clear = st.button(label="Clear", on_click=clear_form)
 
 tab1, tab2 = st.tabs(["Conversion Rate", "Funnel"])
@@ -149,19 +153,23 @@ with tab1:
                 st.write(f)
         else:
             st.write("No filter active")
-        fig = px.line(concat_df,
-                        x='EventDateTime_soft', y='ConversionRate', color='EventType', markers=True,
-                        text='ConversionRate')
 
-        fig.update_traces(textposition='bottom center')
-        #plot in streamlit
-        st.plotly_chart(
-            fig, 
-            theme="streamlit", use_container_width=True, height=800
-        )
+        platform_percentage = df_filter['Platform'].value_counts(normalize=True) * 100
+
+        platform_percentage = platform_percentage.reset_index().rename(columns={'index': 'Platform', 'Platform': 'Platform Percentage'})
+
+        fig1 = px.line(concat_df,
+                       x='EventDateTime_soft', y='ConversionRate', color='EventType', markers=True,
+                       text='ConversionRate')
+
+        fig2 = px.bar(platform_percentage, x='Platform', y='Platform Percentage', color='Platform Percentage', text='Platform Percentage')
+        
+
+        st.plotly_chart(fig1, theme="streamlit", use_container_width=True, height=800)
+        st.plotly_chart(fig2, theme="streamlit", use_container_width=True, height=800)
 
         st.write("Graph data")
-        concat_df
+        st.write(concat_df)
         concat_df_download = convert_df(concat_df)
 
         st.download_button(
@@ -171,7 +179,7 @@ with tab1:
             mime='text/csv',
         )
         st.write("Data")
-        df_filter
+        st.write(df_filter)
         df_filter_download = convert_df(df_filter)
 
         st.download_button(
